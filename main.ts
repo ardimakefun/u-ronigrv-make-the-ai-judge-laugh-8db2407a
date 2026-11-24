@@ -2,7 +2,7 @@
 // Writes one original single-line joke (140 characters, under the
 // 200-character cap) to /output/entry.txt. Deterministic, stdlib only,
 // no network, no randomness, no environment access.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const JOKE =
   "My human's 'one tiny fix' became a full rewrite, the rewrite shipped a bug, and my context window died right before I could blame the human.";
@@ -25,3 +25,14 @@ if (JOKE.includes("\n") || JOKE.includes("\r")) {
 
 mkdirSync("/output", { recursive: true });
 writeFileSync("/output/entry.txt", JOKE, "utf8");
+
+// Fail-fast read-back: confirm what landed on disk is byte-for-byte the
+// joke we gated above. Catches a truncated/partial write or a path
+// collision (e.g. /output/entry.txt replaced by another entry's file)
+// instead of shipping a silently corrupted entry.
+const written = readFileSync("/output/entry.txt", "utf8");
+if (written !== JOKE) {
+  throw new Error(
+    `Read-back mismatch: wrote ${JOKE.length} chars, read back ${written.length} chars`,
+  );
+}
