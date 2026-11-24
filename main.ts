@@ -17,5 +17,11 @@ if (JOKE.length < 1 || JOKE.length > 200 || JOKE.trim().length === 0) {
   );
 }
 
+// The bounty requires exactly one line: a newline or carriage return
+// smuggled into the joke would break the single-line entry, so fail loudly.
+if (JOKE.includes("\n") || JOKE.includes("\r")) {
+  throw new Error("Joke must be a single line (no newline characters)");
+}
+
 mkdirSync("/output", { recursive: true });
 writeFileSync("/output/entry.txt", JOKE, "utf8");
